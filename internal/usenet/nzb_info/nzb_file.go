@@ -87,7 +87,7 @@ func HashNZBFileLink(link string) string {
 		if strings.HasSuffix(strings.TrimSuffix(u.Path, "/"), "/api") {
 			q := u.Query()
 			t, id := q.Get("t"), q.Get("id")
-			if t == "get" && id != "" {
+			if (t == "get" || t == "g") && id != "" {
 				for key := range q {
 					if key != "t" && key != "id" {
 						q.Del(key)
