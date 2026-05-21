@@ -141,13 +141,14 @@ func handleStoreTorzAdd(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if strings.HasPrefix(payload.Link, "magnet:") || !strings.Contains(payload.Link, ":") {
-			m, err := core.ParseMagnetLink(payload.Link)
-			if err != nil || m.Hash == "" {
+			m, merr := core.ParseMagnetLink(payload.Link)
+			if merr != nil || m.Hash == "" {
 				server.ErrorBadRequest(r).Append(server.Error{
 					LocationType: server.LocationTypeBody,
 					Location:     "link",
 					Message:      "invalid link",
 				}).Send(w, r)
+				return
 			}
 			data, err = addTorz(r, ctx, m.RawLink, nil)
 		} else {
