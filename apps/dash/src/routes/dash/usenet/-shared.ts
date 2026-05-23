@@ -6,13 +6,19 @@ export type TimeRange = "7d" | "24h" | "30d";
 
 export const TIME_RANGES: TimeRange[] = ["24h", "7d", "30d"];
 
-export const CHART_COLORS = [
+const CHART_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
   "var(--chart-3)",
   "var(--chart-4)",
   "var(--chart-5)",
 ];
+
+export function getChartColors(n: number): string[] {
+  return n % CHART_COLORS.length === 1
+    ? CHART_COLORS.slice(0, -1)
+    : CHART_COLORS;
+}
 
 export const formatBytes = (v: number) => prettyBytes(v);
 export const formatBytesPerSec = (v: number) => `${prettyBytes(v)}/s`;
@@ -24,10 +30,11 @@ export function buildChartConfig<T>(
   keyFn: (item: T) => string,
   labelFn: (item: T) => string,
 ): ChartConfig {
+  const colors = getChartColors(items.length);
   const config: ChartConfig = {};
   items.forEach((item, i) => {
     config[keyFn(item)] = {
-      color: CHART_COLORS[i % CHART_COLORS.length],
+      color: colors[i % colors.length],
       label: labelFn(item),
     };
   });
