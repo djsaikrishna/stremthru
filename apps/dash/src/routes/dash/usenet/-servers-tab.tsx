@@ -41,11 +41,11 @@ import { Spinner } from "@/components/ui/spinner";
 
 import { RangeSelector } from "./-range-selector";
 import {
-  CHART_COLORS,
   formatBytes,
   formatBytesPerSec,
   formatMs,
   formatPercent,
+  getChartColors,
   pivotTimeSeries,
   type TimeRange,
 } from "./-shared";
@@ -68,10 +68,11 @@ const SEGMENTS_BAR_CHART_CONFIG = {
 } satisfies ChartConfig;
 
 function buildServerChartConfig(servers: AggregatedServerStats[]): ChartConfig {
+  const colors = getChartColors(servers.length);
   const config: ChartConfig = {};
   servers.forEach((s, i) => {
     config[s.server_id] = {
-      color: CHART_COLORS[i % CHART_COLORS.length],
+      color: colors[i % colors.length],
       label: s.server_name,
     };
   });
@@ -162,15 +163,14 @@ function ServerPieChart({
   tooltipValueFormatter?: (value: number) => string;
 }) {
   const chartConfig = useMemo(() => buildServerChartConfig(servers), [servers]);
-  const data = useMemo(
-    () =>
-      servers.map((s, i) => ({
-        fill: CHART_COLORS[i % CHART_COLORS.length],
-        server: s.server_id,
-        value: extractValue(s),
-      })),
-    [servers, extractValue],
-  );
+  const data = useMemo(() => {
+    const colors = getChartColors(servers.length);
+    return servers.map((s, i) => ({
+      fill: colors[i % colors.length],
+      server: s.server_id,
+      value: extractValue(s),
+    }));
+  }, [servers, extractValue]);
 
   const hasData = data.some((d) => d.value > 0);
   if (!hasData) {
@@ -409,15 +409,14 @@ function ServerHorizontalBarChart({
   title: string;
 }) {
   const chartConfig = useMemo(() => buildServerChartConfig(servers), [servers]);
-  const data = useMemo(
-    () =>
-      servers.map((s, i) => ({
-        fill: CHART_COLORS[i % CHART_COLORS.length],
-        server: s.server_name,
-        value: extractValue(s),
-      })),
-    [servers, extractValue],
-  );
+  const data = useMemo(() => {
+    const colors = getChartColors(servers.length);
+    return servers.map((s, i) => ({
+      fill: colors[i % colors.length],
+      server: s.server_name,
+      value: extractValue(s),
+    }));
+  }, [servers, extractValue]);
 
   const hasData = data.some((d) => d.value > 0);
   if (!hasData) {

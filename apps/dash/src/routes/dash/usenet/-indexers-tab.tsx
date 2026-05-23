@@ -50,11 +50,11 @@ import { cn } from "@/lib/utils";
 import { RangeSelector } from "./-range-selector";
 import {
   buildChartConfig,
-  CHART_COLORS,
   formatBytes,
   formatLastSeen,
   formatMs,
   formatPercent,
+  getChartColors,
   pivotTimeSeries,
   type TimeRange,
 } from "./-shared";
@@ -207,16 +207,15 @@ function IndexerPieChart({
       ),
     [indexers],
   );
-  const data = useMemo(
-    () =>
-      indexers.map((i, idx) => ({
-        fill: CHART_COLORS[idx % CHART_COLORS.length],
-        indexer: String(i.indexer_id),
-        indexer_name: i.indexer_name,
-        value: extractValue(i),
-      })),
-    [indexers, extractValue],
-  );
+  const data = useMemo(() => {
+    const colors = getChartColors(indexers.length);
+    return indexers.map((i, idx) => ({
+      fill: colors[idx % colors.length],
+      indexer: String(i.indexer_id),
+      indexer_name: i.indexer_name,
+      value: extractValue(i),
+    }));
+  }, [indexers, extractValue]);
 
   const hasData = data.some((d) => d.value > 0);
   if (!hasData) {
