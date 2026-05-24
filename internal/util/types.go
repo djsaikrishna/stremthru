@@ -2,9 +2,26 @@ package util
 
 import (
 	"encoding/json"
+	"errors"
 	"strconv"
 	"time"
 )
+
+type Booleanish bool
+
+func (bish *Booleanish) UnmarshalJSON(data []byte) error {
+	str := string(data)
+	switch str {
+	case `1`, `"1"`, `true`:
+		*bish = true
+		return nil
+	case `0`, `"0"`, `false`:
+		*bish = false
+		return nil
+	default:
+		return errors.New("invalid boolean value: " + str)
+	}
+}
 
 type JSONNumber json.Number
 
