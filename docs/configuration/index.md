@@ -232,6 +232,8 @@ Comma-separated list of tunnel configuration in `hostname:tunnel_config` format.
 
 If `hostname` is `*` and `tunnel_config` is `false`, only explicitly enabled hostnames will be tunneled.
 
+If `hostname` is `[newz_nzb_grab]`, the configured tunnel is used as a fallback for Newznab nzb file grab requests when no per-hostname tunnel matches.
+
 **Example:**
 
 ```sh
