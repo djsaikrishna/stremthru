@@ -54,7 +54,12 @@ func (css *CommaSeperatedString) Scan(value any) error {
 
 type CommaSeperatedInt []int
 
+const maxCommaSeperatedIntLen = 2048
+
 func (csi CommaSeperatedInt) Value() (driver.Value, error) {
+	if len(csi) > maxCommaSeperatedIntLen {
+		return nil, fmt.Errorf("CommaSeperatedInt length %d exceeds max %d", len(csi), maxCommaSeperatedIntLen)
+	}
 	css := make(CommaSeperatedString, len(csi))
 	for i := range csi {
 		css[i] = strconv.Itoa(csi[i])
@@ -246,6 +251,19 @@ func (ti *TorrentInfo) parse() error {
 	r, err := util.ParseTorrentTitle(ti.TorrentTitle)
 	if err != nil {
 		return err
+	}
+
+	if len(r.Episodes) > maxCommaSeperatedIntLen {
+		log.Warn("parsed episodes oversized, dropping", "title", ti.TorrentTitle, "count", len(r.Episodes))
+		r.Episodes = nil
+	}
+	if len(r.Seasons) > maxCommaSeperatedIntLen {
+		log.Warn("parsed seasons oversized, dropping", "title", ti.TorrentTitle, "count", len(r.Seasons))
+		r.Seasons = nil
+	}
+	if len(r.Volumes) > maxCommaSeperatedIntLen {
+		log.Warn("parsed volumes oversized, dropping", "title", ti.TorrentTitle, "count", len(r.Volumes))
+		r.Volumes = nil
 	}
 
 	ti.ParsedAt = db.Timestamp{Time: time.Now()}

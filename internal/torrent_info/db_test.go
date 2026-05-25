@@ -6,6 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestCommaSeperatedIntValue(t *testing.T) {
+	v, err := CommaSeperatedInt{1, 2, 3}.Value()
+	assert.NoError(t, err)
+	assert.Equal(t, "1,2,3", v)
+
+	_, err = CommaSeperatedInt(make([]int, maxCommaSeperatedIntLen+1)).Value()
+	assert.Error(t, err)
+}
+
 func TestUpsertQuery(t *testing.T) {
 	expected_query := "INSERT INTO torrent_info AS ti (hash,t_title,size,indexer,src,category,seeders,leechers,private) VALUES " +
 		"(?,?,?,?,?,?,?,?,?) " +
