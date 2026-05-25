@@ -96,7 +96,7 @@ func RehashIfNeeded(info *NZBInfo) error {
 var nzbFileFetchSG singleflight.Group
 
 var nzbFileFetcher = func() *http.Client {
-	client := config.GetHTTPClient(config.TUNNEL_TYPE_AUTO)
+	client := config.GetHTTPClient(config.TUNNEL_TYPE_NEWZ_NZB_GRAB)
 	client.Timeout = 60 * time.Second
 	return client
 }()

@@ -17,9 +17,10 @@ import (
 type TunnelType string
 
 const (
-	TUNNEL_TYPE_NONE   TunnelType = ""
-	TUNNEL_TYPE_AUTO   TunnelType = "a"
-	TUNNEL_TYPE_FORCED TunnelType = "f"
+	TUNNEL_TYPE_NONE          TunnelType = ""
+	TUNNEL_TYPE_AUTO          TunnelType = "a"
+	TUNNEL_TYPE_FORCED        TunnelType = "f"
+	TUNNEL_TYPE_NEWZ_NZB_GRAB TunnelType = "[newz_nzb_grab]"
 )
 
 type TunnelMap struct {
@@ -45,6 +46,12 @@ func (tm *TunnelMap) GetDefaultProxyHost() string {
 	return ""
 }
 
+func (tm *TunnelMap) setProxy(hostname string, proxy url.URL) {
+	tm.Lock()
+	tm.data[hostname] = proxy
+	tm.Unlock()
+}
+
 func (tm *TunnelMap) getProxy(hostname string) *url.URL {
 	tm.RLock()
 	hn := hostname
@@ -52,9 +59,7 @@ func (tm *TunnelMap) getProxy(hostname string) *url.URL {
 		if proxy, ok := tm.data[hn]; ok {
 			tm.RUnlock()
 			if hn != hostname {
-				tm.Lock()
-				tm.data[hostname] = proxy
-				tm.Unlock()
+				tm.setProxy(hostname, proxy)
 			}
 			return &proxy
 		}
@@ -92,6 +97,22 @@ func (tm *TunnelMap) forcedProxy(r *http.Request) (*url.URL, error) {
 	return nil, nil
 }
 
+func (tm *TunnelMap) newzNzbGrabProxy(r *http.Request) (*url.URL, error) {
+	if proxy := tm.getProxy(r.URL.Hostname()); proxy != nil {
+		if proxy.Host == "" {
+			return nil, nil
+		}
+		return proxy, nil
+	}
+	if proxy := tm.getProxy(string(TUNNEL_TYPE_NEWZ_NZB_GRAB)); proxy != nil {
+		if proxy.Host == "" {
+			return nil, nil
+		}
+		return proxy, nil
+	}
+	return nil, nil
+}
+
 func (tm *TunnelMap) GetProxy(tunnelType TunnelType) func(req *http.Request) (*url.URL, error) {
 	switch tunnelType {
 	case TUNNEL_TYPE_AUTO:
@@ -100,6 +121,8 @@ func (tm *TunnelMap) GetProxy(tunnelType TunnelType) func(req *http.Request) (*u
 		return tm.forcedProxy
 	case TUNNEL_TYPE_NONE:
 		return nil
+	case TUNNEL_TYPE_NEWZ_NZB_GRAB:
+		return tm.newzNzbGrabProxy
 	default:
 		panic("invalid tunnel type")
 	}
