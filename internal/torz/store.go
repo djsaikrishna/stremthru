@@ -15,6 +15,7 @@ import (
 	"github.com/MunifTanjim/stremthru/internal/shared"
 	storecontext "github.com/MunifTanjim/stremthru/internal/store/context"
 	store_util "github.com/MunifTanjim/stremthru/internal/store/util"
+	"github.com/MunifTanjim/stremthru/internal/torrent_info"
 	"github.com/MunifTanjim/stremthru/internal/torrent_stream"
 	"github.com/MunifTanjim/stremthru/internal/util"
 	"github.com/MunifTanjim/stremthru/store"
@@ -56,7 +57,18 @@ func handleStoreTorzCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log := rCtx.Log
+
 	sid := queryParams.Get("sid")
+
+	basicInfoByHashCh := make(chan map[string]torrent_info.BasicInfo, 1)
+	go func() {
+		data, err := torrent_info.GetBasicInfoByHash(hashes)
+		if err != nil {
+			log.Error("failed to get basic info by hashes", "error", err)
+		}
+		basicInfoByHashCh <- data
+	}()
 
 	params := &store.CheckMagnetParams{
 		ClientIP:  ctx.ClientIP,
@@ -73,6 +85,12 @@ func handleStoreTorzCheck(w http.ResponseWriter, r *http.Request) {
 	}
 	if data.Items == nil {
 		data.Items = []store.CheckMagnetDataItem{}
+	}
+	basicInfoByHash := <-basicInfoByHashCh
+	for i := range data.Items {
+		if info, ok := basicInfoByHash[data.Items[i].Hash]; ok {
+			data.Items[i].Name = info.TorrentTitle
+		}
 	}
 	server.SendData(w, r, 200, data)
 }

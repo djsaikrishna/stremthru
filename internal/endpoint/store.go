@@ -44,6 +44,17 @@ type AddMagnetPayload struct {
 }
 
 func checkMagnet(r *http.Request, ctx *storecontext.Context, magnets []string, sid string, localOnly bool) (*store.CheckMagnetData, error) {
+	log := server.GetReqCtx(r).Log
+
+	basicInfoByHashCh := make(chan map[string]torrent_info.BasicInfo, 1)
+	go func() {
+		data, err := torrent_info.GetBasicInfoByHash(magnets)
+		if err != nil {
+			log.Error("failed to get basic info by hashes", "error", err)
+		}
+		basicInfoByHashCh <- data
+	}()
+
 	params := &store.CheckMagnetParams{}
 	params.APIKey = ctx.StoreAuthToken
 	params.Magnets = magnets
@@ -56,6 +67,12 @@ func checkMagnet(r *http.Request, ctx *storecontext.Context, magnets []string, s
 	data, err := ctx.Store.CheckMagnet(params)
 	if err == nil && data.Items == nil {
 		data.Items = []store.CheckMagnetDataItem{}
+	}
+	basicInfoByHash := <-basicInfoByHashCh
+	for i := range data.Items {
+		if info, ok := basicInfoByHash[data.Items[i].Hash]; ok {
+			data.Items[i].Name = info.TorrentTitle
+		}
 	}
 	return data, err
 }
